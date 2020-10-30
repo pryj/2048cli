@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <Windows.h>
+#include <conio.h>
+int score=0;
+
+int addnum(){
+    return rand()%5?2:4;
+}
 
 int check(int a[][4])
 {
@@ -41,6 +48,7 @@ int up(int a[][4])
                 else if (a[k - 1][j] == a[k][j] && !chk[k - 1][j])
                 { //합침,합쳐진 적 있나 체크
                     a[k - 1][j] += a[k][j];
+                    score+=a[k - 1][j];
                     a[k][j] = 0;
                     ret = 1;
                     chk[k - 1][j] = 1; //합쳐진 적 있음 표시
@@ -54,6 +62,7 @@ int up(int a[][4])
     return ret;
 }
 
+//회전 코-드
 void turn(int a[][4])
 {
     int tmp[4][4];
@@ -65,75 +74,76 @@ void turn(int a[][4])
             a[i][j] = tmp[j][3 - i];
 }
 
+//단순 출력 함수이다
 void print(int a[][4], int chk)
 {
-    if (chk)
+    system("cls");
+    
+    printf("%30d\n\n",score);
+    for (int i = 0; i < 4; i++)
     {
-        printf("\n\n");
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-                if (a[i][j])
-                    printf("%d\t", a[i][j]);
-                else
-                    printf(" \t");
-            printf("\n\n");
-        }
+        for (int j = 0; j < 4; j++)
+            if (a[i][j])
+                printf("%d\t", a[i][j]);
+            else
+                printf(" \t");
+        if(i!=3) printf("\n\n");
     }
-    else
+    //출력 안하는게 나은 경우
+    if (!chk)
     {
-        printf("no\n");
+        //printf("no\n");
     }
 }
 
 int main()
 {
-    int a[4][4]={
+    //데이터 읽기
+    FILE *fp = stdin;
+    int a[4][4] = {
         0,
     };
-    srand(time(0));
-    a[rand()%4][rand()%4]=2;
-    print(a,1);
+    //c는 방향
+    char c;
+    int rnd1 = rand() % 16, rnd2 = rand() % 15;
+
+    a[rnd1 / 4][rnd1 % 4] = addnum();
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+        {
+            rnd2--;
+            if (rnd2 == 0)
+                a[i][j] = addnum();
+        }
+    print(a, 1);
     // 함수호출하여 출력
     while (check(a))
     {
-        char c;
-        scanf("%c", &c);
+        c = getch();
+        //printf("%d",c);
+        int cnt;
+        switch(c){
+            case 72: case 119: cnt=0; break;
+            case 75: case 97: cnt=3; break;
+            case 77: case 100: cnt=1; break;
+            case 80: case 115: cnt=2; break;
+            case 27: cnt=-2; break;
+            default: cnt=-1;
+        }
         int k = 0;
-        if (c == 'W' || c == 'w')
-        {
-            k = up(a);
-        }
-        else if (c == 'A' || c == 'a')
-        {
-            turn(a);
-            turn(a);
-            turn(a);
-            k = up(a);
-            turn(a);
-        }
-        else if (c == 'S' || c == 's')
-        {
-            turn(a);
-            turn(a);
-            k = up(a);
-            turn(a);
-            turn(a);
-        }
-        else if (c == 'D' || c == 'd')
-        {
-            turn(a);
-            k = up(a);
-            turn(a);
-            turn(a);
-            turn(a);
-        }
-        else
-        {
+        //k는 이동 있었나 검증
+        if(cnt==-1)
             continue;
-        }
+        if(cnt==-2)
+            break;
+        for(int i=0;i<cnt;i++)turn(a);
+        k=up(a);
+        for(int i=0;i<4-cnt;i++)turn(a);
+        
+        //이동이 있었다면 2를 추가 생성
         if (k)
         {
+            //빈칸개수 세기
             int cnt = 0;
             for (int i = 0; i < 4; i++)
                 for (int j = 0; j < 4; j++)
@@ -141,19 +151,23 @@ int main()
                         cnt++;
             if (cnt == 0)
                 continue;
+            //어디 넣을지(번째)
             int now = rand() % cnt;
+            //now번째를 찾아감
             for (int i = 0; i < 4; i++)
                 for (int j = 0; j < 4; j++)
                 {
                     if (a[i][j] == 0)
                     {
                         if (now == 0)
-                            a[i][j] = (rand()%5>3)*2+2;
+                            //now번째이므로 2투입
+                            a[i][j] = addnum();
                         now--;
                     }
                 }
         }
-        print(a, k);
+        //출력.
+        print(a, k); 
     }
-    printf("GAME OVER\n");
+    printf("\nGAME OVER\nYOUR SCORE:%d\n",score);
 }
